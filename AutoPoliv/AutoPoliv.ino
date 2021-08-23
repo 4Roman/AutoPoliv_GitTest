@@ -1,90 +1,116 @@
+
 #define _LCD_TYPE 1
 #include <LCD_1602_RUS_ALL.h>
-LCD_1602_RUS <LiquidCrystal_I2C> lcd(0x27, 16, 2);
+LCD_1602_RUS lcd(0x27, 16, 2);
+
+#include <EncButton.h>
+EncButton<EB_TICK, 2, 3, 4> enc;
+
+
+
 #define rele 7
+
+enum enumX
+{
+  nine= 9,
+  fifteen = 15
+};
+enumX x=nine;
+
+enum enumPutOrDelete
+{
+  _put = 0,
+  _delete
+};
+enumPutOrDelete PutOrDelete = _put;
+
+enum enumLines
+{
+  first = 0,
+  second
+};
+enumLines line = first;
+
+enum enumSides
+{
+  _left = 0,
+  _right
+};
+enumSides side = _left;
+
 void setup()
-{ 
+{
+  Serial.begin(9600);
+  enc.setHoldTimeout(3000);
   lcd.init();
   lcd.backlight();
-  lcd.print("Добро пожаловать");
-  delay(5000);
+  greetings();  
   lcd.clear();
-  tuning();
+  tunning();
 }
-void loop() 
+void loop()
 {
-        
-}          
 
-void tuning() 
-{ 
-  lcd.setCursor(1,0);
-  lcd.print(" ");
-    lcd.setCursor(1,1);
-    lcd.print(" ");  
-  lcd.setCursor(1,0);
-  lcd.print("T");
-    lcd.setCursor(1,1);
-    lcd.print("И");  
-  lcd.setCursor(2,0);
-  lcd.print("И");
-    lcd.setCursor(2,1);
-    lcd.print("H");  
-  lcd.setCursor(3,0);
-  lcd.print("П");
-    lcd.setCursor(3,1);
-    lcd.print("T");
-  lcd.setCursor(4,0);
-  lcd.print(" ");
-    lcd.setCursor(4,1);
-    lcd.print("E");
-  lcd.setCursor(5,0);
-  lcd.print("P");
-    lcd.setCursor(5,1);
-    lcd.print("P");  
-  lcd.setCursor(6,0);
-  lcd.print("A");
-    lcd.setCursor(6,1);
-    lcd.print("B");  
-  lcd.setCursor(7,0);
-  lcd.print("C");
-    lcd.setCursor(7,1);
-    lcd.print("A");  
-  lcd.setCursor(8,0);
-  lcd.print("П");
-    lcd.setCursor(8,1);
-    lcd.print("Л");  
-  lcd.setCursor(9,0);
-  lcd.print("И");
-    lcd.setCursor(9,1);
-    lcd.print("");  
-  lcd.setCursor(10,0);
-  lcd.print("C");
-    lcd.setCursor(10,1);
-    lcd.print("B");  
-  lcd.setCursor(11,0);
-  lcd.print("A");
-    lcd.setCursor(11,1);
-    lcd.print("P");  
-  lcd.setCursor(12,0);
-  lcd.print("H");
-    lcd.setCursor(12,1);
-    lcd.print("E");
-  lcd.setCursor(13,0);
-  lcd.print("И");
-    lcd.setCursor(13,1);
-    lcd.print("M");  
-  lcd.setCursor(14,0);
-  lcd.print("Я");
-    lcd.setCursor(14,1);
-    lcd.print("Я");
-  lcd.setCursor(15,0);
-  lcd.print(" ");
-    lcd.setCursor(15,1);
-    lcd.print(" ");
 }
 
-void choose() 
+void type_of_typetable()
 {
-        
-}  
+  lcd.setCursor(6, 0);
+  lcd.print("TИП");
+  lcd.setCursor(3, 1);
+  lcd.print("PACПИCAHИЯ");
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("ИHTEPBAЛ");
+  lcd.setCursor(0, 1);
+  lcd.print("BЫБPAHHOE BPEMЯ");
+  choose();
+  lcd.clear();
+
+}
+
+void choose()
+{
+  Serial.print("Begin");
+  put_or_delete_marker(_put, &line, _left,&x);
+  while ((!enc.isHold()))
+  { 
+    enc.tick();
+    if (enc.isClick())
+    { 
+      Serial.println("Click");
+      put_or_delete_marker(_delete, &line, _left,&x);
+      if (x==nine) x=fifteen; else x=nine;
+      if (line==first) line=second; else line=first;
+      put_or_delete_marker(_put, &line, _left,&x);      
+    }   
+    
+  }
+  Serial.println("Holded");
+  lcd.clear();
+}
+
+void greetings()
+{
+  lcd.print("Добро пожаловать");
+  delay(4000);
+}
+
+void tunning()
+{
+  type_of_typetable();
+}
+
+void  put_or_delete_marker(enumPutOrDelete PutOrDelete, enumLines *line, enumSides side, enumX *x)
+{  
+  lcd.setCursor(*x, *line);
+  if (PutOrDelete == _put)
+  {
+    if (side == _left) 
+    {
+      lcd.print("<"); 
+    }
+    else lcd.print(">");
+  }
+  else lcd.print(" ");
+}
