@@ -4,18 +4,16 @@
 LCD_1602_RUS lcd(0x27, 16, 2);
 
 #include <EncButton.h>
-EncButton<EB_TICK, 2, 3, 4> enc;
-
-
-
+EncButton<EB_TICK, 3, 2, 4> enc;
 #define rele 7
+short minutes = 0;
 
 enum enumX
 {
-  nine= 9,
+  nine = 9,
   fifteen = 15
 };
-enumX x=nine;
+enumX x = nine;
 
 enum enumPutOrDelete
 {
@@ -44,9 +42,10 @@ void setup()
   enc.setHoldTimeout(3000);
   lcd.init();
   lcd.backlight();
-  greetings();  
+  greetings();
   lcd.clear();
-  tunning();
+  type_of_typetable();
+  minutes = interval();
 }
 void loop()
 {
@@ -64,30 +63,33 @@ void type_of_typetable()
   lcd.print("ИHTEPBAЛ");
   lcd.setCursor(0, 1);
   lcd.print("BЫБPAHHOE BPEMЯ");
-  choose();
+  choose(9, 15, &side);
+  void resetState();
   lcd.clear();
 
 }
 
-void choose()
+void choose(int a, int b, enumSides *side)
 {
   Serial.print("Begin");
-  put_or_delete_marker(_put, &line, _left,&x);
-  while ((!enc.isHold()))
-  { 
+  x == a;
+  put_or_delete_marker(_put, &line, side, &x);
+  while ((!enc.isHeld()))
+  {
     enc.tick();
     if (enc.isClick())
-    { 
+    {
       Serial.println("Click");
-      put_or_delete_marker(_delete, &line, _left,&x);
-      if (x==nine) x=fifteen; else x=nine;
-      if (line==first) line=second; else line=first;
-      put_or_delete_marker(_put, &line, _left,&x);      
-    }   
-    
+      put_or_delete_marker(_delete, &line, side, &x);
+      if (x == a) x = b; else x = a;
+      if (line == first) line = second; else line = first;
+      put_or_delete_marker(_put, &line, side, &x);
+    }
+
   }
   Serial.println("Holded");
   lcd.clear();
+
 }
 
 void greetings()
@@ -96,21 +98,91 @@ void greetings()
   delay(4000);
 }
 
-void tunning()
+void  put_or_delete_marker(enumPutOrDelete PutOrDelete, enumLines *line, enumSides* side, enumX *x)
 {
-  type_of_typetable();
-}
-
-void  put_or_delete_marker(enumPutOrDelete PutOrDelete, enumLines *line, enumSides side, enumX *x)
-{  
   lcd.setCursor(*x, *line);
   if (PutOrDelete == _put)
   {
-    if (side == _left) 
+    if (*side == _left)
     {
-      lcd.print("<"); 
+      lcd.print("<");
     }
     else lcd.print(">");
   }
   else lcd.print(" ");
+}
+
+int interval()
+{
+  Serial.println("beg");
+  short minutes = 0;  
+  bool change=false;
+  lcd.setCursor(11, 0);
+  lcd.print("минут");   
+  lcd.setCursor(0, 1);
+  lcd.print("=");
+  lcd.setCursor(4, 1);
+  lcd.print("час");
+  lcd.setCursor(8, 1);
+  lcd.print("и");
+  lcd.setCursor(13, 1);
+  lcd.print("мин");
+  
+  while ((!enc.isHeld()))
+  {     
+    enc.tick();
+    if (change==true)
+    {
+      change=false;
+      lcd.setCursor(0, 0); 
+      lcd.print("    ");
+      lcd.setCursor(1, 1); 
+      lcd.print("  ");
+      lcd.setCursor(10, 1); 
+      lcd.print("  ");
+    }
+    lcd.setCursor(0, 0); 
+    lcd.print(minutes, DEC);
+    lcd.setCursor(1, 1);    
+    lcd.print(minutes/60, DEC);
+    lcd.setCursor(10, 1);    
+    lcd.print(minutes%60, DEC);
+    if (enc.isLeft())
+    {
+      if (minutes != 0)
+      {
+        minutes = minutes - 15;
+        change=true;
+      }
+    }
+
+    if (enc.isRight())
+    {
+      if (minutes != 1440)
+      {
+        minutes = minutes+15;
+        change=true;
+      }
+    }
+    if (enc.isLeftH()) 
+    {      
+      if (minutes >59)
+      {
+        minutes = minutes-60;
+        change=true;
+      }    
+    }
+    if (enc.isRightH())
+    {
+      
+      if (minutes < 1381)
+      {
+        minutes = minutes+60;
+        change=true;
+      }    
+    }
+    
+  }
+  Serial.println("Holded");
+  return minutes;
 }
